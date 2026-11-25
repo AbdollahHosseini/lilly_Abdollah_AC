@@ -11,9 +11,12 @@ Endpoints:
 """
 import json
 import random
+import time
 
 from fastapi import FastAPI, Form, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi import Depends
+
 import uvicorn
 
 app = FastAPI()
@@ -75,7 +78,8 @@ def get_all_meds():
 def get_unreliable_meds(response: Response):
     if random.random() < FAILURE_RATE:
         response.status_code = 500
-        return {"error": "The medicines service is temporarily unavailable."}
+        time.sleep(1)  # Simulate a delay for the unreliable endpoint
+        return {"error": "Too many requests, try reloading the page momentarily.", "medicines": get_unreliable_meds(response).get("medicines", [])} 
     return {"medicines": _load_medicines()}
 
 
@@ -129,7 +133,16 @@ def delete_med(name: str = Form(...)):
 
 
 # Add your average-price function here
-
+@app.get('/average-price')
+def average_price():
+    medicines = _load_medicines()
+    if not medicines:
+        return {"error": "No medicines found."}
+    
+    total_price = sum(med.get("price", 0) for med in medicines if med.get("price") is not None and med.get("price") >= 0)
+    average = total_price / len(medicines)
+    
+    return {"average_price": average}
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
