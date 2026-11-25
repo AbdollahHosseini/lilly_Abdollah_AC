@@ -32,6 +32,37 @@ FAILURE_RATE = 0.3
 def _load_medicines():
     with open("data.json") as meds:
         data = json.load(meds)
+        for med in data["medicines"]:
+            try:
+                if med.get("name") is None:
+                    med["name"] = "Unknown"
+                print({"error": "Invalid medicine name format."})
+
+                if len(med["name"]) == 0:
+                    med["name"] = "Unknown"
+                    print({"error": "Invalid medicine name format."})
+
+                if type(med["price"]) is not float:
+                    try:
+                        med["price"] = float(med["price"])
+                    except (ValueError, TypeError):
+                        med["price"] = -1
+                        print({"error": "Invalid medicine price format."})
+
+                elif med["price"] is None:
+                    med["price"] = 0.0
+                    print({"error": "Invalid medicine price format."})
+
+                else:
+                    if med["price"] < 0:
+                        med["price"] = abs(med["price"])
+                        print({"error": "Invalid medicine price format."})
+
+            except KeyError:
+                med["name"] = "Missing Keys, Ignore this record."
+                med["price"] = -1
+                print({"error": "Invalid medicine data format."})
+                    
     return data["medicines"]
 
 
